@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>錯題計算器</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; padding: 24px 16px; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #1a1a1a; }
+  .container { max-width: 720px; margin: 0 auto; }
+  .card { background: #fff; border: 1px solid #e5e3de; border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .section-title { font-size: 12px; font-weight: 600; color: #888; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  label { font-size: 14px; color: #555; white-space: nowrap; }
+  input[type=text], input[type=number] {
+    border: 1px solid #ddd; border-radius: 8px; padding: 7px 10px; font-size: 14px;
+    background: #fff; color: #1a1a1a; outline: none; transition: border-color .15s;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: #7F77DD; }
+  input[type=text] { flex: 1; min-width: 120px; }
+  input[type=number] { width: 72px; }
+  button {
+    border: 1px solid #ccc; border-radius: 8px; padding: 7px 16px; font-size: 14px;
+    background: #fff; color: #333; cursor: pointer; font-weight: 500; transition: all .12s;
+  }
+  button:hover { background: #f5f5f5; }
+  button:active { transform: scale(.97); }
+  .btn-primary { background: #EEEDFE; border-color: #AFA9EC; color: #3C3489; }
+  .btn-primary:hover { background: #CECBF6; }
+  .btn-green { background: #E1F5EE; border-color: #5DCAA5; color: #085041; }
+  .btn-green:hover { background: #9FE1CB; }
+  .class-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 20px; }
+  .chip { padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 500; border: 1.5px solid transparent; display: flex; align-items: center; gap: 6px; }
+  .chip-del { font-size: 11px; opacity: .6; cursor: pointer; border: none; background: none; padding: 0; color: inherit; line-height: 1; }
+  .chip-del:hover { opacity: 1; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 14px; }
+  .stat { border-radius: 8px; padding: 12px 14px; }
+  .stat .slabel { font-size: 12px; margin-bottom: 4px; }
+  .stat .sval { font-size: 20px; font-weight: 600; }
+  .s-purple { background: #EEEDFE; } .s-purple .slabel { color: #534AB7; } .s-purple .sval { color: #3C3489; }
+  .s-teal   { background: #E1F5EE; } .s-teal .slabel   { color: #0F6E56; } .s-teal .sval   { color: #085041; }
+  .s-coral  { background: #FAECE7; } .s-coral .slabel  { color: #993C1D; } .s-coral .sval  { color: #712B13; }
+  .s-amber  { background: #FAEEDA; } .s-amber .slabel  { color: #854F0B; } .s-amber .sval  { color: #633806; }
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tab { padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid transparent; transition: all .12s; }
+  .q-row { background: #fff; border: 1px solid #e5e3de; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border-left-width: 3px; }
+  .q-num { font-size: 13px; font-weight: 600; color: #888; min-width: 44px; }
+  .bar-wrap { flex: 1; height: 8px; background: #f0efe8; border-radius: 4px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 4px; transition: width .18s; }
+  .bar-low  { background: #5DCAA5; }
+  .bar-mid  { background: #EF9F27; }
+  .bar-high { background: #D85A30; }
+  .q-count { font-size: 16px; font-weight: 600; min-width: 30px; text-align: center; }
+  .btn-wrong { border-radius: 8px; padding: 5px 12px; font-size: 13px; font-weight: 500; }
+  .btn-undo { background: #f5f4f0; border-color: #ddd; color: #888; padding: 5px 9px; font-size: 13px; border-radius: 8px; }
+  .btn-undo:disabled { opacity: .25; cursor: default; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .actions button { flex: 1; min-width: 120px; padding: 9px 16px; }
+  .btn-reset { flex: 0 !important; min-width: 72px !important; background: #f5f4f0; border-color: #ddd; color: #888; }
+  .result-area { background: #fff; border: 1px solid #e5e3de; border-radius: 12px; padding: 18px 20px; margin-top: 14px; display: none; }
+  .result-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+  .rtable { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+  .rtable th { text-align: left; color: #888; font-weight: 500; padding: 5px 8px; border-bottom: 1px solid #eee; }
+  .rtable td { padding: 7px 8px; border-bottom: 1px solid #f0efe8; }
+  .rtable tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 99px; font-weight: 600; }
+  .tag-h { background: #FAECE7; color: #993C1D; }
+  .tag-m { background: #FAEEDA; color: #854F0B; }
+  .tag-l { background: #E1F5EE; color: #0F6E56; }
+  .hidden { display: none; }
+  .save-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
+  .history-list { display: flex; flex-direction: column; gap: 6px; }
+  .history-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f5f4f0; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid transparent; transition: border-color .12s; }
+  .history-item:hover { border-color: #AFA9EC; }
+  .history-item .hi-name { flex: 1; font-weight: 500; }
+  .history-item .hi-date { color: #aaa; font-size: 12px; }
+  .history-item .hi-del { color: #ccc; font-size: 12px; cursor: pointer; border: none; background: none; }
+  .history-item .hi-del:hover { color: #D85A30; }
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>錯題計算器</h1>
+
+  <div id="setup-panel">
+    <div class="card">
+      <div class="section-title">考試設定</div>
+      <div class="row">
+        <label>考試名稱</label>
+        <input type="text" id="exam-name" placeholder="例：第一次段考" />
+        <label>總題數</label>
+        <input type="number" id="total-q" min="1" max="100" value="20" />
+      </div>
+      <div class="section-title" style="margin-top:14px;">班級管理</div>
+      <div class="class-chips" id="class-chips"></div>
+      <div class="row">
+        <input type="text" id="new-class-name" placeholder="班級名稱（例：三年甲班）" />
+        <input type="number" id="new-class-size" placeholder="人數" min="1" max="200" style="width:72px;" />
+        <button onclick="addClass()">新增班級</button>
+      </div>
+      <button class="btn-primary" onclick="initExam()" style="width:100%;margin-top:6px;padding:10px;">開始計算</button>
+    </div>
+
+    <div id="history-panel" class="card" style="display:none;">
+      <div class="section-title">歷史紀錄</div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </div>
+
+  <div id="exam-panel" class="hidden">
+    <div class="stats">
+      <div class="stat s-purple"><div class="slabel">考試</div><div class="sval" id="s-name" style="font-size:14px;margin-top:2px;"></div></div>
+      <div class="stat s-teal"><div class="slabel">總題數</div><div class="sval" id="s-total"></div></div>
+      <div class="stat s-coral"><div class="slabel">最多錯誤</div><div class="sval" id="s-maxerr">0</div></div>
+      <div class="stat s-amber"><div class="slabel">平均錯誤率</div><div class="sval" id="s-avgrate">0%</div></div>
+    </div>
+
+    <div class="tab-bar" id="class-tab-bar"></div>
+    <div id="q-grid"></div>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="showResult()">顯示錯題總表</button>
+      <button class="btn-green" onclick="exportCSV()">匯出 CSV</button>
+      <button class="btn-reset" onclick="resetAll()">重設</button>
+    </div>
+    <div class="save-note">資料已自動儲存到本機瀏覽器，下次開啟仍可繼續使用。</div>
+
+    <div class="result-area" id="result-area">
+      <div class="result-title" id="result-title"></div>
+      <table class="rtable">
+        <thead><tr><th>題號</th><th>錯誤人數</th><th>錯誤率</th><th>難度</th></tr></thead>
+        <tbody id="result-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const PALETTE = [
+  {bg:'#EEEDFE',border:'#AFA9EC',text:'#3C3489'},
+  {bg:'#E1F5EE',border:'#5DCAA5',text:'#085041'},
+  {bg:'#FAECE7',border:'#F0997B',text:'#712B13'},
+  {bg:'#FAEEDA',border:'#EF9F27',text:'#633806'},
+  {bg:'#FBEAF0',border:'#ED93B1',text:'#72243E'},
+  {bg:'#E6F1FB',border:'#85B7EB',text:'#0C447C'},
+];
+
+const LS_CLASSES = 'wrongcalc_classes';
+const LS_EXAM    = 'wrongcalc_exam';
+const LS_HISTORY = 'wrongcalc_history';
+
+let classes   = [];
+let allCounts = [];
+let totalQ    = 20;
+let examName  = '';
+let currentClass = 0;
+
+function save() {
+  localStorage.setItem(LS_CLASSES, JSON.stringify(classes));
+  localStorage.setItem(LS_EXAM, JSON.stringify({ examName, totalQ, allCounts, currentClass }));
+}
+
+function loadSession() {
+  try {
+    const cl = localStorage.getItem(LS_CLASSES);
+    const ex = localStorage.getItem(LS_EXAM);
+    if (cl) classes = JSON.parse(cl);
+    if (ex) {
+      const d = JSON.parse(ex);
+      examName     = d.examName     || '';
+      totalQ       = d.totalQ       || 20;
+      allCounts    = d.allCounts    || [];
+      currentClass = d.currentClass || 0;
+    }
+  } catch(e) {}
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(LS_HISTORY)) || []; } catch(e) { return []; }
+}
+function saveHistory() {
+  const h = getHistory();
+  const entry = { id: Date.now(), name: examName, date: new Date().toLocaleDateString('zh-TW'), classes, totalQ, allCounts };
+  const idx = h.findIndex(x => x.name === examName);
+  if (idx >= 0) h[idx] = entry; else h.unshift(entry);
+  localStorage.setItem(LS_HISTORY, JSON.stringify(h.slice(0, 20)));
+}
+
+function addClass() {
+  const name = document.getElementById('new-class-name').value.trim();
+  const size = parseInt(document.getElementById('new-class-size').value) || 0;
+  if (!name || size < 1) { alert('請輸入班級名稱和人數'); return; }
+  classes.push({ name, size });
+  document.getElementById('new-class-name').value = '';
+  document.getElementById('new-class-size').value = '';
+  renderChips();
+}
+
+function delClass(i) {
+  classes.splice(i, 1);
+  renderChips();
+}
+
+function renderChips() {
+  const c = document.getElementById('class-chips');
+  c.innerHTML = '';
+  classes.forEach((cl, i) => {
+    const p = PALETTE[i % PALETTE.length];
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.style.cssText = `background:${p.bg};color:${p.text};border-color:${p.border};`;
+    chip.innerHTML = `${cl.name}（${cl.size}人）`;
+    const del = document.createElement('button');
+    del.className = 'chip-del';
+    del.textContent = '✕';
+    del.onclick = () => delClass(i);
+    chip.appendChild(del);
+    c.appendChild(chip);
+  });
+}
+
+function initExam() {
+  if (classes.length === 0) { alert('請先新增至少一個班級'); return; }
+  examName = document.getElementById('exam-name').value.trim() || '本次考試';
+  totalQ   = parseInt(document.getElementById('total-q').value) || 20;
+  allCounts = classes.map(() => new Array(totalQ).fill(0));
+  currentClass = 0;
+  enterExam();
+}
+
+function enterExam() {
+  document.getElementById('s-name').textContent  = examName;
+  document.getElementById('s-total').textContent = totalQ;
+  document.getElementById('setup-panel').classList.add('hidden');
+  document.getElementById('exam-panel').classList.remove('hidden');
+  document.getElementById('result-area').style.display = 'none';
+  renderTabs();
+  renderGrid();
+  updateStats();
+  save();
+}
+
+function renderTabs() {
+  const bar = document.getElementById('class-tab-bar');
+  bar.innerHTML = '';
+  classes.forEach((cl, i) => {
+    const p = PALETTE[i % PALETTE.length];
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.textContent = cl.name;
+    tab.style.cssText = i === currentClass
+      ? `background:${p.bg};color:${p.text};border-color:${p.border};`
+      : `background:#f5f4f0;color:#888;border-color:transparent;`;
+    tab.onclick = () => switchClass(i);
+    bar.appendChild(tab);
+  });
+}
+
+function switchClass(i) {
+  currentClass = i;
+  renderTabs();
+  renderGrid();
+  updateStats();
+  save();
+}
+
+function renderGrid() {
+  const grid  = document.getElementById('q-grid');
+  grid.innerHTML = '';
+  const counts = allCounts[currentClass];
+  const size   = classes[currentClass].size;
+  const p      = PALETTE[currentClass % PALETTE.length];
+  counts.forEach((c, i) => {
+    const pct = size > 0 ? Math.round(c / size * 100) : 0;
+    const barCls = pct >= 60 ? 'bar-high' : pct >= 30 ? 'bar-mid' : 'bar-low';
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    row.style.borderLeftColor = p.border;
+    row.innerHTML = `
+      <span class="q-num">第 ${i+1} 題</span>
+      <div class="bar-wrap"><div class="bar ${barCls}" id="bar-${i}" style="width:${pct}%"></div></div>
+      <span class="q-count" id="cnt-${i}" style="color:${p.text};">${c}</span>
+      <button class="btn-wrong" style="background:${p.bg};border-color:${p.border};color:${p.text};" onclick="addWrong(${i})">＋錯誤</button>
+      <button class="btn-undo" id="undo-${i}" onclick="undoWrong(${i})" ${c===0?'disabled':''}>↩</button>
+    `;
+    grid.appendChild(row);
+  });
+}
+
+function addWrong(i) {
+  const size = classes[currentClass].size;
+  if (allCounts[currentClass][i] < size) {
+    allCounts[currentClass][i]++;
+    updateRow(i);
+    updateStats();
+    refreshResult();
+    saveHistory();
+    save();
+  }
+}
+
+function undoWrong(i) {
+  if (allCounts[currentClass][i] > 0) {
+    allCounts[currentClass][i]--;
+    updateRow(i);
+    updateStats();
+    refreshResult();
+    save();
+  }
+}
+
+function updateRow(i) {
+  const size = classes[currentClass].size;
+  const c    = allCounts[currentClass][i];
+  const pct  = size > 0 ? Math.round(c / size * 100) : 0;
+  const bar  = document.getElementById('bar-' + i);
+  bar.className = 'bar ' + (pct >= 60 ? 'bar-high' : pct >= 30 ? 'bar-mid' : 'bar-low');
+  bar.style.width = pct + '%';
+  document.getElementById('cnt-' + i).textContent = c;
+  document.getElementById('undo-' + i).disabled = c === 0;
+}
+
+function updateStats() {
+  const counts = allCounts[currentClass];
+  const size   = classes[currentClass].size;
+  const max    = Math.max(...counts);
+  const avg    = size > 0 ? Math.round(counts.reduce((a,b)=>a+b,0) / counts.length / size * 100) : 0;
+  document.getElementById('s-maxerr').textContent  = max + ' 人';
+  document.getElementById('s-avgrate').textContent = avg + '%';
+}
+
+function refreshResult() {
+  const area = document.getElementById('result-area');
+  if (area.style.display !== 'none') showResult();
+}
+
+function showResult() {
+  const area = document.getElementById('result-area');
+  area.style.display = 'block';
+  const cl = classes[currentClass];
+  document.getElementById('result-title').textContent = `${examName}　${cl.name}　錯題總表`;
+  const body   = document.getElementById('result-body');
+  body.innerHTML = '';
+  const counts = allCounts[currentClass];
+  const size   = cl.size;
+  const sorted = counts.map((c,i)=>({q:i+1,c})).sort((a,b)=>b.c-a.c);
+  sorted.forEach(({q,c}) => {
+    const rate = size > 0 ? Math.round(c / size * 100) : 0;
+    let tag, label;
+    if (rate >= 60) { tag='tag-h'; label='高'; }
+    else if (rate >= 30) { tag='tag-m'; label='中'; }
+    else { tag='tag-l'; label='低'; }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>第 ${q} 題</td><td>${c} 人</td><td>${rate}%</td><td><span class="tag ${tag}">${label}</span></td>`;
+    body.appendChild(tr);
+  });
+}
+
+function exportCSV() {
+  let rows = [['考試名稱','班級','人數','題號','錯誤人數','錯誤率']];
+  classes.forEach((cl, ci) => {
+    allCounts[ci].forEach((c, i) => {
+      const rate = cl.size > 0 ? (c / cl.size * 100).toFixed(1) : 0;
+      rows.push([examName, cl.name, cl.size, `第${i+1}題`, c, rate + '%']);
+    });
+  });
+  const csv  = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = examName + '_錯題統計.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetAll() {
+  if (!confirm('確定要重設並回到設定頁面？目前資料已自動儲存於歷史紀錄。')) return;
+  saveHistory();
+  localStorage.removeItem(LS_EXAM);
+  localStorage.removeItem(LS_CLASSES);
+  classes = []; allCounts = []; examName = ''; totalQ = 20; currentClass = 0;
+  document.getElementById('setup-panel').classList.remove('hidden');
+  document.getElementById('exam-panel').classList.add('hidden');
+  document.getElementById('result-area').style.display = 'none';
+  renderChips();
+  renderHistoryPanel();
+}
+
+function renderHistoryPanel() {
+  const h = getHistory();
+  const panel = document.getElementById('history-panel');
+  const list  = document.getElementById('history-list');
+  if (h.length === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  list.innerHTML = '';
+  h.forEach((entry, idx) => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <span class="hi-name">${entry.name}</span>
+      <span class="hi-date">${entry.date}　${entry.classes.length} 個班級　${entry.totalQ} 題</span>
+      <button class="hi-del" onclick="delHistory(${idx}, event)">✕</button>
+    `;
+    item.onclick = () => loadHistory(idx);
+    list.appendChild(item);
+  });
+}
+
+function loadHistory(idx) {
+  const h = getHistory();
+  const entry = h[idx];
+  classes      = entry.classes;
+  totalQ       = entry.totalQ;
+  examName     = entry.name;
+  allCounts    = entry.allCounts;
+  currentClass = 0;
+  enterExam();
+}
+
+function delHistory(idx, e) {
+  e.stopPropagation();
+  const h = getHistory();
+  h.splice(idx, 1);
+  localStorage.setItem(LS_HISTORY, JSON.stringify(h));
+  renderHistoryPanel();
+}
+
+(function init() {
+  loadSession();
+  renderChips();
+  renderHistoryPanel();
+  if (examName && classes.length > 0 && allCounts.length > 0) {
+    enterExam();
+  }
+})();
+</script>
+</body>
+</html>
